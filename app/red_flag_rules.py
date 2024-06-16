@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load high-risk countries from CSV file
-def load_high_risk_countries(file_path='/Users/kaleemullahqasim/Documents/GitHub/SaRGen/high_risk_countries.csv'):
+def load_high_risk_countries(file_path='data/high_risk_countries.csv'):
     try:
         high_risk_countries_df = pd.read_csv(file_path)
         high_risk_countries = high_risk_countries_df['Name'].tolist()
@@ -13,7 +13,7 @@ def load_high_risk_countries(file_path='/Users/kaleemullahqasim/Documents/GitHub
 high_risk_countries = load_high_risk_countries()
 
 # Load keywords from CSV file
-def load_keywords(file_path='/Users/kaleemullahqasim/Documents/GitHub/SaRGen/high_risk_keywords.csv'):
+def load_keywords(file_path='data/high_risk_keywords.csv'):
     try:
         keywords_df = pd.read_csv(file_path)
         keywords = keywords_df['Keyword'].astype(str).tolist()

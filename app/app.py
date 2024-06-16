@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 # from sar_generator import generate_sar_narrative
-from sar_groq import generate_sar_narrative
-from red_flag_rules import (detect_high_value_cash_deposits, detect_structured_transactions,
+from app.sar_groq import generate_sar_narrative
+from app.red_flag_rules import (detect_high_value_cash_deposits, detect_structured_transactions,
                             detect_high_risk_country_transactions, detect_rapid_movement_of_funds,
                             detect_inconsistent_business_activity, detect_high_velocity_cash_activity,
                             detect_keywords_hitting, detect_unusual_transaction_patterns,
