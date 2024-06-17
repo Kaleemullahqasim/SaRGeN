@@ -38,8 +38,8 @@ def detect_high_value_cash_deposits(transactions):
 def detect_structured_transactions(transactions):
     return transactions[(transactions['amount'] < 10000) & (transactions['amount'] > 9000)]
 
-def detect_rapid_movement_of_funds(transactions):
-    return transactions[transactions['velocity'] > 7]
+# def detect_rapid_movement_of_funds(transactions):
+#     return transactions[transactions['velocity'] > 7]
 
 def detect_inconsistent_business_activity(transactions):
     return transactions[transactions['account_balance'] < transactions['amount']]
@@ -47,14 +47,11 @@ def detect_inconsistent_business_activity(transactions):
 def detect_high_velocity_cash_activity(transactions):
     return transactions[transactions['velocity'] > 8]
 
-def detect_third_party_transactions(transactions):
-    return transactions[transactions['description'].str.contains("third party", case=False)]
+# def detect_third_party_transactions(transactions):
+#     return transactions[transactions['description'].str.contains("third party", case=False)]
 
 def detect_unusual_transaction_patterns(transactions):
     return transactions[(transactions['amount'] > 5000) & (transactions['transaction_type'] == 'withdrawal') & (transactions['velocity'] > 5)]
-
-# def detect_commingling_of_funds(transactions):
-#     return transactions[transactions['description'].str.contains("commingle", case=False)]
 
 def detect_large_incoming_wires(transactions):
     high_risk_countries = load_high_risk_countries()  # Re-load in case of changes during runtime

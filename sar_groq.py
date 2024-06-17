@@ -24,6 +24,7 @@ def generate_sar_narrative(customer_id, violations, transactions):
 
         Ensure the narrative is clear, concise, and suitable for submission to regulatory authorities.
         EXTREMELY IMPORTANT: Ensure that the narrative is compliant with the Bank Secrecy Act (BSA) and other relevant regulations, and it should must follow the offical format.
+        Dont write any extra text like "Here is a comprehensive SAR narrative that meets the requirements:", just the narrative.
         """
 
         api_key = "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"  # Replace with your actual API key
@@ -37,7 +38,7 @@ def generate_sar_narrative(customer_id, violations, transactions):
                     "content": prompt
                 }
             ],
-            temperature=0.5,
+            temperature=0.7,
             max_tokens=1024,
             top_p=1,
             stream=True,
@@ -51,3 +52,5 @@ def generate_sar_narrative(customer_id, violations, transactions):
         return narrative
     except Exception as e:
         return f"Error generating SAR narrative: {e}"
+    
+

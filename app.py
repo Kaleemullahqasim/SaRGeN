@@ -5,8 +5,8 @@ import plotly.express as px
 # from sar_generator import generate_sar_narrative
 from sar_groq import generate_sar_narrative
 from red_flag_rules import (detect_high_value_cash_deposits, detect_structured_transactions,
-                            detect_high_risk_country_transactions, detect_rapid_movement_of_funds,
-                            detect_inconsistent_business_activity, detect_high_velocity_cash_activity,
+                            detect_high_risk_country_transactions,
+                             detect_high_velocity_cash_activity,
                             detect_keywords_hitting, detect_unusual_transaction_patterns,
                             detect_large_incoming_wires)
 
@@ -20,13 +20,13 @@ def load_data(file):
         return None
 
 # Red Flag Rules Module
-def apply_red_flag_rules(transactions, selected_rules):
+def apply_red_flag_rules(transactions, selected_rules, customer_id=None):
     rules = {
         'high_value_cash_deposits': detect_high_value_cash_deposits,
         'structured_transactions': detect_structured_transactions,
         'high_risk_country_transactions': detect_high_risk_country_transactions,
-        'rapid_movement_of_funds': detect_rapid_movement_of_funds,
-        'inconsistent_business_activity': detect_inconsistent_business_activity,
+        # 'rapid_movement_of_funds': detect_rapid_movement_of_funds,
+        # 'inconsistent_business_activity': detect_inconsistent_business_activity,
         'high_velocity_cash_activity': detect_high_velocity_cash_activity,
         'keywords_hitting': detect_keywords_hitting,
         'unusual_transaction_patterns': detect_unusual_transaction_patterns,
@@ -37,7 +37,11 @@ def apply_red_flag_rules(transactions, selected_rules):
     flagged_transactions = {}
     for rule_name in selected_rules:
         if rule_name in rules:
-            flagged_transactions[rule_name] = rules[rule_name](transactions)
+            if customer_id:
+                customer_transactions = transactions[transactions['customer_id'] == customer_id]
+                flagged_transactions[rule_name] = rules[rule_name](customer_transactions)
+            else:
+                flagged_transactions[rule_name] = rules[rule_name](transactions)
     
     return flagged_transactions
 
@@ -82,14 +86,20 @@ if uploaded_file is not None:
 
             red_flag_rules = [
                     'high_value_cash_deposits', 'structured_transactions', 'high_risk_country_transactions',
-                    'rapid_movement_of_funds', 'inconsistent_business_activity', 'high_velocity_cash_activity',
+                     'high_velocity_cash_activity',
                     'keywords_hitting', 'unusual_transaction_patterns', 'large_incoming_wires'
                 ]
 
             selected_rules = st.multiselect("Select Red Flag Rules to Apply", red_flag_rules)
 
+            # Customer Selection (for filtering)
+            selected_customer = st.selectbox("Select Customer (Optional)", ['All'] + transactions['customer_id'].unique().tolist(), index=0)
+
             if st.button("Apply Selected Red Flag Rules"):
-                flagged_transactions = apply_red_flag_rules(transactions, selected_rules)
+                if selected_customer == 'All':
+                    flagged_transactions = apply_red_flag_rules(transactions, selected_rules)
+                else:
+                    flagged_transactions = apply_red_flag_rules(transactions, selected_rules, customer_id=selected_customer)
                 
                 st.write("Flagged Transactions")
                 for name in selected_rules:
@@ -142,20 +152,24 @@ if uploaded_file is not None:
 
             flagged_transactions = apply_red_flag_rules(transactions, red_flag_rules)
             customers_with_violations = get_customers_with_multiple_violations(flagged_transactions)
-            
+
             # Filter customers by number of violations
             min_violations = st.number_input("Minimum Number of Violations", min_value=1, max_value=10, value=2)
             filtered_customers = {customer: rules for customer, rules in customers_with_violations.items() if len(rules) >= min_violations}
-            
+
             # Pagination
             customers_per_page = st.number_input("Customers per Page", min_value=1, max_value=50, value=10)
             customer_ids = list(filtered_customers.keys())
             total_pages = (len(customer_ids) + customers_per_page - 1) // customers_per_page
             selected_page = st.selectbox("Select Page", range(1, total_pages + 1))
-            
+
             start_index = (selected_page - 1) * customers_per_page
             end_index = start_index + customers_per_page
             paginated_customer_ids = customer_ids[start_index:end_index]
+
+            # Create a dictionary to store SAR narratives for each customer
+            if 'sar_narratives' not in st.session_state:
+                st.session_state['sar_narratives'] = {}
 
             st.write("Customers with Multiple Rule Violations")
             for customer in paginated_customer_ids:
@@ -170,14 +184,18 @@ if uploaded_file is not None:
                     st.write("Transaction Amount Distribution for Customer")
                     fig = px.histogram(customer_transactions, x="amount")
                     st.plotly_chart(fig)
-                    
+
                     rule_violations_count = {rule: sum(customer_transactions['transaction_id'].isin(flagged_transactions[rule]['transaction_id'])) for rule in rules}
                     st.write(f"Number of times each rule was broken for Customer ID: {customer}")
                     for rule, count in rule_violations_count.items():
                         st.write(f"{rule}: {count} times")
-                    
-                    if st.button(f"Generate SAR Narrative for Customer {customer}"):
-                        sar_narrative = generate_sar_narrative(customer, rules, customer_transactions.to_dict('records'))
-                        st.subheader("SAR Narrative")
-                        st.text_area("Generated SAR Narrative", value=sar_narrative, height=600)
 
+                    # Check if a narrative already exists for this customer
+                    if customer in st.session_state['sar_narratives']:
+                        st.subheader("SAR Narrative")
+                        st.text_area("Generated SAR Narrative", value=st.session_state['sar_narratives'][customer], height=600)
+                    else:
+                        if st.button(f"Generate SAR Narrative for Customer {customer}"):
+                            sar_narrative = generate_sar_narrative(customer, rules, customer_transactions.to_dict('records'))
+                            st.session_state['sar_narratives'][customer] = sar_narrative  # Store the narrative in session state
+                            st.experimental_rerun()  # Force re-run to display the narrative
