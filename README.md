@@ -76,7 +76,7 @@ SaRGeN is a comprehensive Bank Secrecy Act (BSA) / Anti-Money Laundering (AML) D
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/SaRGeN.git
+git clone https://github.com/Kaleemullahqasim/SaRGeN
 
 # Navigate to project directory
 cd SaRGeN
