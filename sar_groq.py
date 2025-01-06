@@ -49,7 +49,7 @@ Guidelines:
 Do not include any introductory text before the first section header.
 """
     try:
-        api_key = "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"
+        api_key = ""
 
         client = Groq(api_key=api_key)
         completion = client.chat.completions.create(
