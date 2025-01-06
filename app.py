@@ -2,11 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import logging
 # from sar_generator import generate_sar_narrative
 from sar_groq import generate_sar_narrative
 from red_flag_rules import (detect_high_value_cash_deposits, detect_structured_transactions,
-                            detect_high_risk_country_transactions,
-                             detect_high_velocity_cash_activity,
+                            detect_high_risk_country_transactions, 
+                            detect_high_velocity_cash_activity,
                             detect_keywords_hitting, detect_unusual_transaction_patterns,
                             detect_large_incoming_wires)
 
@@ -54,6 +55,18 @@ def get_customers_with_multiple_violations(flagged_transactions):
                 customer_violations[customer_id] = set()
             customer_violations[customer_id].add(rule)
     return {customer: rules for customer, rules in customer_violations.items() if len(rules) > 1}
+
+# Function to generate and display SAR narrative
+def generate_and_display_sar(customer, rules):
+    customer_transactions = transactions[transactions['customer_id'] == customer]
+    try:
+        sar_narrative = generate_sar_narrative(customer, rules, customer_transactions.to_dict('records'))
+        st.session_state['sar_narratives'][customer] = sar_narrative
+        st.subheader("SAR Narrative")
+        st.text_area("Generated SAR Narrative", value=sar_narrative, height=600)
+    except Exception as e:
+        logging.error(f"Error generating SAR narrative: {e}")  # Log the error
+        st.error(f"An error occurred while generating the SAR narrative. Please check the logs for details.")
 
 # Streamlit App
 st.set_page_config(page_title="BSA / AML Detection System", layout="wide")
@@ -190,12 +203,11 @@ if uploaded_file is not None:
                     for rule, count in rule_violations_count.items():
                         st.write(f"{rule}: {count} times")
 
-                    # Check if a narrative already exists for this customer
+                    # Generate SAR Narrative using a callback function
+                    if st.button(f"Generate SAR Narrative for Customer {customer}"):
+                        generate_and_display_sar(customer, rules)
+
+                    # Display the narrative if generated
                     if customer in st.session_state['sar_narratives']:
                         st.subheader("SAR Narrative")
                         st.text_area("Generated SAR Narrative", value=st.session_state['sar_narratives'][customer], height=600)
-                    else:
-                        if st.button(f"Generate SAR Narrative for Customer {customer}"):
-                            sar_narrative = generate_sar_narrative(customer, rules, customer_transactions.to_dict('records'))
-                            st.session_state['sar_narratives'][customer] = sar_narrative  # Store the narrative in session state
-                            st.experimental_rerun()  # Force re-run to display the narrative

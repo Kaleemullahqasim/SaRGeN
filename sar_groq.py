@@ -53,4 +53,3 @@ def generate_sar_narrative(customer_id, violations, transactions):
     except Exception as e:
         return f"Error generating SAR narrative: {e}"
     
-
